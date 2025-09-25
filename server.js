@@ -10,7 +10,6 @@ const seedPrivileges = require('./src/config/privilegesSeeder');
 const seedPrivilegePermissionRoles = require('./src/config/privilegePermissionRoleseeder');
 const initializeUserAdmin = require('./src/config/initializeUserAdmin');
 
-
 // Importación de rutas
 const categoryRoutes = require('./src/routes/categoryRoutes');
 const userRoutes = require('./src/routes/userRoutes');
@@ -38,10 +37,9 @@ app.use(bodyParser.json({ limit: '20mb' }));
 app.use(bodyParser.urlencoded({ limit: '20mb', extended: true }));
 
 // Configuración de rutas estáticas
-app.use('/uploads', express.static('uploads'));
+app.use('/uploads', express.static('Uploads'));
 
 // Configuración de rutas de la API
-
 app.use('/api/privileges', privilegeRoutes);
 app.use('/api/privilege-permission-roles', privilegePermissionRoleRoutes);
 app.use('/api/categories', categoryRoutes);
@@ -58,50 +56,51 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/shopping', shoppingRoutes);
 app.use('/api/appointment', appointment);
 
-
-// Función para iniciar el servidor
-const startServer = async () => {
-    try {
-        // Conectar a la base de datos
-        await sequelize.authenticate();
-        console.log('Conexión a la base de datos establecida correctamente.');
-
-        // Sincronizar los modelos con la base de datos
-        await sequelize.sync();
-        console.log('Modelos sincronizados con la base de datos.');
-
-        // Inicializar los permisos automáticamente
-        await initializePermissions();
-        console.log('Permisos inicializados correctamente.');
-
-        await initializeRoles();
-        console.log('Roles inicializados correctamente.');
-
-        await initializeAdminRole();
-        console.log('Rol Admin inicializado correctamente.');
-
-        // Ejecutar el seeder de privilegios
-        await seedPrivileges();
-        console.log('Privilegios sembrados correctamente.');
-
-        // Ejecutar el seeder de PrivilegePermissionRoles
-        await seedPrivilegePermissionRoles();
-        console.log('PrivilegePermissionRoles sembrados correctamente.');
-
-         await initializeUserAdmin();
-         console.log('Usuario Admin inicializado correctamente.');
-
-
-        // Iniciar el servidor
-        const PORT = process.env.PORT || 3000;
-        app.listen(PORT, () => {
-            console.log(`Servidor corriendo en el puerto ${PORT}`);
-        });
-    } catch (error) {
-        console.error('Error al iniciar el servidor:', error);
-        process.exit(1);
-    }
+// Función para inicializar la base de datos
+const initializeDatabase = async () => {
+  try {
+    await sequelize.authenticate();
+    console.log('Conexión a MSSQL establecida');
+    await sequelize.sync();
+    console.log('Modelos sincronizados con la base de datos');
+    await initializePermissions();
+    console.log('Permisos inicializados correctamente');
+    await initializeRoles();
+    console.log('Roles inicializados correctamente');
+    await initializeAdminRole();
+    console.log('Rol Admin inicializado correctamente');
+    await seedPrivileges();
+    console.log('Privilegios sembrados correctamente');
+    await seedPrivilegePermissionRoles();
+    console.log('PrivilegePermissionRoles sembrados correctamente');
+    await initializeUserAdmin();
+    console.log('Usuario Admin inicializado correctamente');
+  } catch (error) {
+    console.error('Error al inicializar la base de datos:', error);
+    throw error;
+  }
 };
 
-// Iniciar el servidor
-startServer();
+// Ruta de prueba
+app.get('/', (req, res) => {
+  res.json({ message: 'API BARBERIA ORION funcionando' });
+});
+
+// Inicialización para entornos locales
+if (process.env.NODE_ENV !== 'production') {
+  const PORT = process.env.APP_PORT || 3000;
+  initializeDatabase().then(() => {
+    app.listen(PORT, () => {
+      console.log(`Servidor local corriendo en el puerto ${PORT}`);
+    });
+  }).catch(error => {
+    console.error('Error al iniciar el servidor local:', error);
+    process.exit(1);
+  });
+}
+
+// Exportar para Vercel
+module.exports = async (req, res) => {
+  await initializeDatabase(); // Inicializa DB por solicitud en serverless
+  return app(req, res);
+};
