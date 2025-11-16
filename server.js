@@ -86,34 +86,44 @@ app.get('/', (req, res) => {
   res.json({ message: 'API BARBERIA ORION funcionando' });
 });
 
-// Inicialización para entornos locales
-if (process.env.NODE_ENV !== 'production') {
-  const PORT = process.env.APP_PORT || 3000;
-  initializeDatabase().then(() => {
-    app.listen(PORT, () => {
-      console.log(`Servidor local corriendo en el puerto ${PORT}`);
-    });
-  }).catch(error => {
-    console.error('Error al iniciar el servidor local:', error);
-    process.exit(1);
-  });
-}
-
 // Variable para controlar la inicialización en producción
 let dbInitialized = false;
 
-// Exportar para Vercel
-module.exports = async (req, res) => {
-  // Inicializar la base de datos solo una vez en producción
-  if (!dbInitialized) {
-    try {
-      await initializeDatabase();
-      dbInitialized = true;
-      console.log('Base de datos inicializada en producción');
-    } catch (error) {
-      console.error('Error al inicializar la base de datos en producción:', error);
-      return res.status(500).json({ error: 'Error al inicializar la base de datos' });
+// Detectar el entorno de despliegue
+const isVercel = process.env.VERCEL;
+const isRender = process.env.PORT && !isVercel;
+const isLocal = process.env.NODE_ENV !== 'production' && !isVercel && !isRender;
+
+// Si es Vercel (serverless), exportar función handler
+if (isVercel) {
+  module.exports = async (req, res) => {
+    // Inicializar la base de datos solo una vez en producción
+    if (!dbInitialized) {
+      try {
+        await initializeDatabase();
+        dbInitialized = true;
+        console.log('Base de datos inicializada en producción (Vercel)');
+      } catch (error) {
+        console.error('Error al inicializar la base de datos en producción:', error);
+        return res.status(500).json({ error: 'Error al inicializar la base de datos' });
+      }
     }
-  }
-  return app(req, res);
-};
+    return app(req, res);
+  };
+} else {
+  // Para Render y desarrollo local: iniciar servidor en puerto
+  const PORT = process.env.PORT || process.env.APP_PORT || 3000;
+  initializeDatabase().then(() => {
+    app.listen(PORT, () => {
+      console.log(`Servidor corriendo en el puerto ${PORT}`);
+      if (isRender) {
+        console.log('Desplegado en Render.com');
+      } else if (isLocal) {
+        console.log('Modo desarrollo local');
+      }
+    });
+  }).catch(error => {
+    console.error('Error al iniciar el servidor:', error);
+    process.exit(1);
+  });
+}
