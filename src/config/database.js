@@ -1,21 +1,26 @@
 require('dotenv').config();
 const { Sequelize } = require('sequelize');
 
+// Configuración para forzar autenticación SQL (no Azure AD)
 const sequelize = new Sequelize(
-  process.env.DB_NAME,
-  process.env.DB_USER, // Debe ser 'orion' (no 'orionbarberia')
-  process.env.DB_PASSWORD,
+  process.env.DB_NAME,      // Orion
+  process.env.DB_USER,      // orion
+  process.env.DB_PASSWORD,  // Medellin*2025$/
   {
-    host: process.env.DB_HOST,
+    host: process.env.DB_HOST,    // orionbarberia.database.windows.net
     port: process.env.DB_PORT || 1433,
     dialect: process.env.DB_DIALECT || 'mssql',
     dialectOptions: {
-      encrypt: true, // Required for secure connections
-      trustServerCertificate: false, // Azure SQL requires this to be false
-      enableArithAbort: true,
       options: {
-        encrypt: true
-      }
+        encrypt: true,                // Obligatorio en Azure
+        trustServerCertificate: false,
+        requestTimeout: 30000,        // 30 segundos
+        enableArithAbort: true,
+        // Fuerza SQL auth (ignora Azure AD)
+        authentication: {
+          type: 'default',            // Usa SQL con user/pass
+        },
+      },
     },
     pool: {
       max: 5,
@@ -28,12 +33,17 @@ const sequelize = new Sequelize(
 );
 
 // Prueba la conexión al inicializar
-sequelize.authenticate()
-  .then(() => {
-    console.log('✅ Conexión a MSSQL establecida correctamente');
-  })
-  .catch(err => {
-    console.error('❌ Error de conexión a MSSQL:', err.message);
-  });
+async function testConnection() {
+  try {
+    await sequelize.authenticate();
+    console.log('✅ Conexión a MSSQL exitosa con SQL auth');
+  } catch (error) {
+    console.error('❌ Error de conexión a MSSQL:', error.message);
+    // No hacer exit(1) aquí para que el servidor pueda iniciar y mostrar el error
+  }
+}
+
+// Ejecutar test de conexión
+testConnection();
 
 module.exports = sequelize;
