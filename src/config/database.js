@@ -3,7 +3,7 @@ const { Sequelize } = require('sequelize');
 
 // Configuración para forzar autenticación SQL (no Azure AD)
 const sequelize = new Sequelize(
-  process.env.DB_NAME,      // Orion
+  process.env.DB_NAME,      // AndromedaDB
   process.env.DB_USER,      // orion
   process.env.DB_PASSWORD,  // Medellin*2025$/
   {
