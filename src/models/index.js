@@ -47,6 +47,10 @@ Detail.belongsTo(appointment, { foreignKey: 'appointmentId' });
 Role.belongsToMany(Permission, { through: PermissionRole, as: 'permissions', foreignKey: 'roleId'});
 Permission.belongsToMany(Role, { through: PermissionRole, as: 'roles', foreignKey: 'permissionId' });
 
+// Privilege <-> Permission (One-to-Many)
+Privilege.belongsTo(Permission, { foreignKey: 'permissionId' });
+Permission.hasMany(Privilege, { foreignKey: 'permissionId' });
+
 
 const models = {
     PrivilegePermissionRole,
