@@ -91,8 +91,9 @@ let dbInitialized = false;
 
 // Detectar el entorno de despliegue
 const isVercel = process.env.VERCEL;
-const isRender = process.env.PORT && !isVercel;
-const isLocal = process.env.NODE_ENV !== 'production' && !isVercel && !isRender;
+const isAzure = process.env.WEBSITE_SITE_NAME || process.env.AZURE_APP_SERVICE;
+const isRender = process.env.PORT && !isVercel && !isAzure;
+const isLocal = process.env.NODE_ENV !== 'production' && !isVercel && !isRender && !isAzure;
 
 // Si es Vercel (serverless), exportar función handler
 if (isVercel) {
@@ -111,12 +112,14 @@ if (isVercel) {
     return app(req, res);
   };
 } else {
-  // Para Render y desarrollo local: iniciar servidor en puerto
+  // Para Azure, Render y desarrollo local: iniciar servidor en puerto
   const PORT = process.env.PORT || process.env.APP_PORT || 3000;
   initializeDatabase().then(() => {
-    app.listen(PORT, () => {
+    app.listen(PORT, '0.0.0.0', () => {
       console.log(`Servidor corriendo en el puerto ${PORT}`);
-      if (isRender) {
+      if (isAzure) {
+        console.log('Desplegado en Azure App Service');
+      } else if (isRender) {
         console.log('Desplegado en Render.com');
       } else if (isLocal) {
         console.log('Modo desarrollo local');

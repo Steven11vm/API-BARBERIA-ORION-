@@ -11,7 +11,8 @@ const sequelize = new Sequelize(
     dialect: process.env.DB_DIALECT,
     dialectOptions: {
       encrypt: true, // Required for secure connections
-      trustServerCertificate: process.env.NODE_ENV === 'production' ? false : true // False in production
+      trustServerCertificate: false, // Azure SQL requires this to be false
+      enableArithAbort: true
     },
     pool: {
       max: 5,
