@@ -17,7 +17,7 @@ const supplier = require('./suppliers');
 const Order = require('./orders');
 const OrderDetail = require('./ordersDetail');
 const Privilege = require('./privilegios');
-const PrivilegePermissionRole = require('./privilegePermissionRole')
+const PrivilegePermissionRole = require('./privilegePermissionRole');
 
 // Define associations
 appointment.belongsTo(User, { foreignKey: 'clienteId' });

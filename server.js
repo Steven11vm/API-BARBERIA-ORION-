@@ -99,8 +99,21 @@ if (process.env.NODE_ENV !== 'production') {
   });
 }
 
+// Variable para controlar la inicialización en producción
+let dbInitialized = false;
+
 // Exportar para Vercel
 module.exports = async (req, res) => {
-  await initializeDatabase(); // Inicializa DB por solicitud en serverless
+  // Inicializar la base de datos solo una vez en producción
+  if (!dbInitialized) {
+    try {
+      await initializeDatabase();
+      dbInitialized = true;
+      console.log('Base de datos inicializada en producción');
+    } catch (error) {
+      console.error('Error al inicializar la base de datos en producción:', error);
+      return res.status(500).json({ error: 'Error al inicializar la base de datos' });
+    }
+  }
   return app(req, res);
 };
