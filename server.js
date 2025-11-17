@@ -86,21 +86,47 @@ app.get('/', (req, res) => {
   res.json({ message: 'API BARBERIA ORION funcionando' });
 });
 
-// Inicialización para entornos locales
-if (process.env.NODE_ENV !== 'production') {
-  const PORT = process.env.APP_PORT || 3000;
+// Variable para controlar la inicialización en producción
+let dbInitialized = false;
+
+// Detectar el entorno de despliegue
+const isVercel = process.env.VERCEL;
+const isAzure = process.env.WEBSITE_SITE_NAME || process.env.AZURE_APP_SERVICE;
+const isRender = process.env.PORT && !isVercel && !isAzure;
+const isLocal = process.env.NODE_ENV !== 'production' && !isVercel && !isRender && !isAzure;
+
+// Si es Vercel (serverless), exportar función handler
+if (isVercel) {
+  module.exports = async (req, res) => {
+    // Inicializar la base de datos solo una vez en producción
+    if (!dbInitialized) {
+      try {
+        await initializeDatabase();
+        dbInitialized = true;
+        console.log('Base de datos inicializada en producción (Vercel)');
+      } catch (error) {
+        console.error('Error al inicializar la base de datos en producción:', error);
+        return res.status(500).json({ error: 'Error al inicializar la base de datos' });
+      }
+    }
+    return app(req, res);
+  };
+} else {
+  // Para Azure, Render y desarrollo local: iniciar servidor en puerto
+  const PORT = process.env.PORT || process.env.APP_PORT || 3000;
   initializeDatabase().then(() => {
-    app.listen(PORT, () => {
-      console.log(`Servidor local corriendo en el puerto ${PORT}`);
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`Servidor corriendo en el puerto ${PORT}`);
+      if (isAzure) {
+        console.log('Desplegado en Azure App Service');
+      } else if (isRender) {
+        console.log('Desplegado en Render.com');
+      } else if (isLocal) {
+        console.log('Modo desarrollo local');
+      }
     });
   }).catch(error => {
-    console.error('Error al iniciar el servidor local:', error);
+    console.error('Error al iniciar el servidor:', error);
     process.exit(1);
   });
 }
-
-// Exportar para Vercel
-module.exports = async (req, res) => {
-  await initializeDatabase(); // Inicializa DB por solicitud en serverless
-  return app(req, res);
-};

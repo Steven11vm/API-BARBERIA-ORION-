@@ -17,7 +17,7 @@ const supplier = require('./suppliers');
 const Order = require('./orders');
 const OrderDetail = require('./ordersDetail');
 const Privilege = require('./privilegios');
-const PrivilegePermissionRole = require('./privilegePermissionRole')
+const PrivilegePermissionRole = require('./privilegePermissionRole');
 
 // Define associations
 appointment.belongsTo(User, { foreignKey: 'clienteId' });
@@ -46,6 +46,10 @@ Detail.belongsTo(appointment, { foreignKey: 'appointmentId' });
 // Definir asociaciones
 Role.belongsToMany(Permission, { through: PermissionRole, as: 'permissions', foreignKey: 'roleId'});
 Permission.belongsToMany(Role, { through: PermissionRole, as: 'roles', foreignKey: 'permissionId' });
+
+// Privilege <-> Permission (One-to-Many)
+Privilege.belongsTo(Permission, { foreignKey: 'permissionId' });
+Permission.hasMany(Privilege, { foreignKey: 'permissionId' });
 
 
 const models = {

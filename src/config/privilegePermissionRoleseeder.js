@@ -3,62 +3,68 @@
 const sequelize = require('./database');
 const { QueryTypes } = require('sequelize');
 const PrivilegePermissionRole = require('../models/privilegePermissionRole');
-const PermissionRole = require('../models/permissionRole');
-const Privilege = require('../models/privilegios');
 
 async function seedPrivilegePermissionRoles() {
     try {
-        // Verificar si ya existen registros
-        const [result] = await sequelize.query(
-            'SELECT COUNT(*) as count FROM privilegesPermissionRole',
+        // Leer todos los registros existentes desde la tabla correcta
+        const existing = await sequelize.query(
+            'SELECT permissionRoleId, privilegeId FROM privilegesPermissionRole',
             { type: QueryTypes.SELECT }
         );
 
-        // Si ya existen registros, no hacer nada
-        if (parseInt(result.count) > 0) {
-            console.log('Los PrivilegePermissionRoles ya están registrados. Omitiendo seeder.');
-            return;
-        }
+        // Convertir a un set para verificar rápido si ya existen
+        const existingSet = new Set(
+            existing.map(
+                (e) => `${e.permissionRoleId}-${e.privilegeId}`
+            )
+        );
 
         // Definir los privilegios para cada permissionRole
         const privilegesByPermissionRole = {
-            1: [1, 2, 3, 4, 5, 6], // Roles
-            2: [7, 8, 9, 10, 11, 12], // Users
-            3: [13, 14, 15, 16, 17], // Categories
-            4: [18, 19, 20, 21, 22, 23], // Products
-            5: [24, 25, 26, 27, 28, 29], // Suppliers
-            6: [30, 31, 32, 33, 34], // Shoppings
-            7: [35, 36, 37, 38, 39, 40], // Services
-            8: [41, 42], // Programming
-            9: [43, 44, 45, 46, 47, 48], // Absences
-            10: [49, 50, 51, 52], // Appointment
-            11: [53, 54, 55, 56, 57, 58], // Orders
-            12: [59, 60, 61, 62, 63] // Sales
+            1: [1, 2, 3, 4, 5, 6],
+            2: [7, 8, 9, 10, 11, 12],
+            3: [13, 14, 15, 16, 17],
+            4: [18, 19, 20, 21, 22, 23],
+            5: [24, 25, 26, 27, 28, 29],
+            6: [30, 31, 32, 33, 34],
+            7: [35, 36, 37, 38, 39, 40],
+            8: [41, 42],
+            9: [43, 44, 45, 46, 47, 48],
+            10: [49, 50, 51, 52],
+            11: [53, 54, 55, 56, 57, 58],
+            12: [59, 60, 61, 62, 63]
         };
 
-        // Crear array para almacenar todos los PrivilegePermissionRoles
+        // Crear array para los que falten
         const privilegePermissionRolesToSeed = [];
 
-        // Para cada PermissionRole, asignar los privilegios correspondientes
         for (const [permissionRoleId, privilegeIds] of Object.entries(privilegesByPermissionRole)) {
             for (const privilegeId of privilegeIds) {
-                privilegePermissionRolesToSeed.push({
-                    permissionRoleId: parseInt(permissionRoleId),
-                    privilegeId: privilegeId
-                });
+                const key = `${permissionRoleId}-${privilegeId}`;
+                if (!existingSet.has(key)) {
+                    privilegePermissionRolesToSeed.push({
+                        permissionRoleId: parseInt(permissionRoleId),
+                        privilegeId: privilegeId,
+                        createdAt: new Date(),
+                        updatedAt: new Date()
+                    });
+                }
             }
         }
 
-        // Insertar los PrivilegePermissionRoles
-        await PrivilegePermissionRole.bulkCreate(privilegePermissionRolesToSeed);
-        console.log('PrivilegePermissionRoles sembrados exitosamente.');
+        if (privilegePermissionRolesToSeed.length > 0) {
+            await PrivilegePermissionRole.bulkCreate(privilegePermissionRolesToSeed);
+            console.log(`✅ Se insertaron ${privilegePermissionRolesToSeed.length} PrivilegePermissionRoles nuevos.`);
+        } else {
+            console.log('⚡ No había nada nuevo por insertar. Todo está actualizado.');
+        }
 
-        // Verificar que se hayan creado los registros correctamente
+        // Verificar total
         const createdCount = await PrivilegePermissionRole.count();
-        console.log(`Se han creado ${createdCount} PrivilegePermissionRoles.`);
+        console.log(`📊 Total de PrivilegePermissionRoles ahora: ${createdCount}`);
 
     } catch (error) {
-        console.error('Error al sembrar PrivilegePermissionRoles:', error);
+        console.error('❌ Error al sembrar PrivilegePermissionRoles:', error);
     }
 }
 

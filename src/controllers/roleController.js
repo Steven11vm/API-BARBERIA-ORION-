@@ -1,8 +1,8 @@
 // controllers/roleController.js
 const roleService = require('../services/roleService');
 const permissionService = require('../services/permissionService');
-const { sequelize } = require('../models');
-const { Role, PermissionRole } = require('../models');
+const Role = require('../models/role');
+const PermissionRole = require('../models/permissionRole');
 const { sendResponse, sendError } = require('../utils/response');
 
 
@@ -59,9 +59,6 @@ const deleteRole = async (req, res) => {
     const { id } = req.params;
 
     try {
-        // Asegúrate de que PermissionRole esté importado correctamente
-        const PermissionRole = require('../models/permissionRole'); // Asegúrate de que esta ruta sea correcta
-
         // Primero, eliminar las asociaciones en la tabla intermedia
         const deletedAssociations = await PermissionRole.destroy({
             where: { roleId: id }
@@ -70,7 +67,6 @@ const deleteRole = async (req, res) => {
         console.log(`Número de asociaciones eliminadas: ${deletedAssociations}`);
 
         // Luego, eliminar el rol
-        const Role = require('../models/role');
         const deletedRole = await Role.destroy({
             where: { id }
         });

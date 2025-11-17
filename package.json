@@ -9,6 +9,7 @@
     "bcrypt": "^6.0.0",
     "body-parser": "^1.20.0",
     "cors": "^2.8.5",
+<<<<<<< HEAD
     "dotenv": "^16.0.0",
     "express": "^4.18.0",
     "express-validator": "^7.2.1",
@@ -17,6 +18,16 @@
     "nodemailer": "^7.0.6",
     "sequelize": "^6.37.7",
     "tedious": "^18.6.1"
+=======
+    "sequelize": "^6.32.0",
+    "tedious": "^17.0.0",
+    "bcrypt": "^5.1.1",
+    "jsonwebtoken": "^9.0.2",
+    "google-auth-library": "^9.0.0",
+    "nodemailer": "^6.9.7",
+    "express-validator": "^7.0.1",
+    "multer": "^1.4.4"
+>>>>>>> 3893bb6c3ea3e38a51ae033b4dcbd1f90080f035
   },
   "devDependencies": {
     "nodemon": "^3.0.0"

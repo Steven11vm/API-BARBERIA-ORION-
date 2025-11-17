@@ -2,7 +2,7 @@ const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const { body, validationResult } = require('express-validator');
-const Product = require('./models/product'); // Ajusta la ruta según tu estructura
+const Product = require('./products'); // Ajusta la ruta según tu estructura
 const app = express();
 // Servir archivos estáticos desde el directorio 'uploads'
 app.use('/uploads', express.static('uploads'));
