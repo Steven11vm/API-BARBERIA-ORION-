@@ -1,5 +1,5 @@
 const Role = require('../models/role');
-const Permission = require('../models/Permission');
+const Permission = require('../models/permission');
 const PermissionRole = require('../models/permissionRole');
 
 const initializeAdminRole = async () => {
