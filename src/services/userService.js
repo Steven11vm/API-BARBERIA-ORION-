@@ -111,21 +111,24 @@ const requestPasswordReset = async (email) => {
         console.log(`🔑 Contraseña configurada: ${process.env.EMAIL_PASS ? '***' + process.env.EMAIL_PASS.slice(-3) : 'NO CONFIGURADA'}`);
 
         // Configuración del transporte para nodemailer con mejor configuración para Gmail
+        // Intentar primero con puerto 587 (STARTTLS), si falla usar 465 (SSL)
         const transporter = nodemailer.createTransport({
             service: 'gmail',
             host: 'smtp.gmail.com',
-            port: 587,
-            secure: false, // true para 465, false para otros puertos
+            port: 465, // Cambiar a puerto 465 (SSL) que es más confiable
+            secure: true, // true para 465, false para otros puertos
             auth: {
                 user: process.env.EMAIL_USER.trim(),
                 pass: process.env.EMAIL_PASS.trim(),
             },
             tls: {
-                rejectUnauthorized: false,
-                ciphers: 'SSLv3'
+                rejectUnauthorized: false
             },
-            debug: true, // Habilitar logs de debug
-            logger: true // Habilitar logger
+            connectionTimeout: 10000, // 10 segundos para conectar
+            greetingTimeout: 10000, // 10 segundos para el saludo
+            socketTimeout: 20000, // 20 segundos para operaciones de socket
+            debug: false,
+            logger: false
         });
 
         // Verificar la conexión del transporter con timeout (opcional)
@@ -263,12 +266,13 @@ const requestPasswordReset = async (email) => {
             html: htmlContent
         };
 
-        // Crear promesa con timeout de 30 segundos para el envío
+        // Crear promesa con timeout de 60 segundos para el envío (Gmail puede ser lento)
         const sendPromise = transporter.sendMail(mailOptions);
         const sendTimeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Timeout: El envío del correo tomó más de 30 segundos')), 30000)
+            setTimeout(() => reject(new Error('Timeout: El envío del correo tomó más de 60 segundos. Verifica las credenciales de Gmail.')), 60000)
         );
 
+        console.log('⏳ Esperando respuesta del servidor de correo...');
         const info = await Promise.race([sendPromise, sendTimeoutPromise]);
         console.log('✅ Correo enviado exitosamente!');
         console.log('📬 Message ID:', info.messageId);
