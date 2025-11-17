@@ -21,7 +21,7 @@ const initializeUserAdmin = async () => {
         }
 
         // 3. Crear la contraseña encriptada
-        const hashedPassword = await bcrypt.hash('orion12345', 10); // Cambia 'admin123' por una contraseña más segura
+        const hashedPassword = await bcrypt.hash('Orion2025*', 10); // Cambia 'admin123' por una contraseña más segura
 
         // 4. Crear el usuario administrador
         const adminUser = await User.create({

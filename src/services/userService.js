@@ -103,46 +103,106 @@ const requestPasswordReset = async (email) => {
         },
     });
 
-    // HTML template para el correo con estilos en línea y logo hosteado
+    // HTML template profesional y elegante para el correo
     const htmlContent = `
     <!DOCTYPE html>
-    <html>
+    <html lang="es">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Restablecer Contraseña</title>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <title>Restablecer Contraseña - Barbería Orion</title>
     </head>
-    <body style="font-family: 'Helvetica', Arial, sans-serif; background-color: #1E1E1E; color: #FFFFFF; padding: 20px; line-height: 1.6; margin: 0;">
-        <div style="max-width: 600px; margin: 0 auto; background: linear-gradient(145deg, #2A2A2A, #1A1A1A); padding: 30px; border-radius: 15px; box-shadow: 0 10px 20px rgba(0,0,0,0.3);">
-           <div style="text-align: center; margin-bottom: 30px;">
-    <img src="https://tu-dominio.com/ruta/a/tu/logo-light.png" 
-         alt="Logo" 
-         style="max-width: 180px; height: auto;"
-         width="180"
-         height="auto">
-</div>
-            <h1 style="color: #FFFFFF; text-align: center; font-size: 24px; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 25px; border-bottom: 2px solid #003366; padding-bottom: 10px;">
-                Restablecer Contraseña
-            </h1>
-            <p style="color: #FFFFFF; font-size: 14px; margin: 15px 0;">
-                Estimado usuario,
-            </p>
-            <p style="color: #FFFFFF; font-size: 14px; margin: 15px 0;">
-                Has solicitado restablecer tu contraseña. Utiliza el siguiente código de verificación:
-            </p>
-            <div style="font-size: 20px; font-weight: bold; text-align: center; margin: 30px 0; padding: 18px; background: linear-gradient(145deg, #2A2A2A, #222222); border-radius: 10px; color: #FFFFFF; letter-spacing: 5px; border: 1px solid #003366; box-shadow: 0 5px 15px rgba(255, 215, 0, 0.1);">
-                ${resetToken}
-            </div>
-            <p style="color: #FFFFFF; font-size: 14px; margin: 15px 0;">
-                Este código es válido por los próximos 60 minutos. Si no has solicitado restablecer tu contraseña, por favor ignora este mensaje.
-            </p>
-            <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #003366;">
-                <p style="color: #888888; font-size: 10px; margin-top: 15px; text-align: center;">
-                    Este es un correo automático, por favor no responda.<br>
-                    &copy; 2024 Brberia orion . Todos los derechos reservados.
-                </p>
-            </div>
-        </div>
+    <body style="margin: 0; padding: 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333333;">
+        <table role="presentation" style="width: 100%; border-collapse: collapse; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 20px;">
+            <tr>
+                <td align="center" style="padding: 20px 0;">
+                    <table role="presentation" style="max-width: 600px; width: 100%; background: #ffffff; border-radius: 16px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15); overflow: hidden;">
+                        <!-- Header con gradiente -->
+                        <tr>
+                            <td style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); padding: 40px 30px; text-align: center;">
+                                <div style="margin-bottom: 20px;">
+                                    <img src="https://tu-dominio.com/ruta/a/tu/logo-light.png" 
+                                         alt="Barbería Orion" 
+                                         style="max-width: 160px; height: auto; display: block; margin: 0 auto;"
+                                         width="160"
+                                         height="auto">
+                                </div>
+                                <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 600; letter-spacing: 0.5px; text-transform: none;">
+                                    Restablecer Contraseña
+                                </h1>
+                            </td>
+                        </tr>
+                        
+                        <!-- Contenido principal -->
+                        <tr>
+                            <td style="padding: 50px 40px;">
+                                <p style="margin: 0 0 20px 0; color: #4a5568; font-size: 16px; line-height: 1.8;">
+                                    Estimado/a cliente,
+                                </p>
+                                <p style="margin: 0 0 30px 0; color: #4a5568; font-size: 16px; line-height: 1.8;">
+                                    Hemos recibido una solicitud para restablecer la contraseña de tu cuenta en <strong style="color: #1a1a2e;">Barbería Orion</strong>. 
+                                    Para completar este proceso, utiliza el siguiente código de verificación:
+                                </p>
+                                
+                                <!-- Código de verificación destacado -->
+                                <table role="presentation" style="width: 100%; margin: 35px 0;">
+                                    <tr>
+                                        <td align="center" style="padding: 0;">
+                                            <div style="background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%); border: 2px dashed #cbd5e0; border-radius: 12px; padding: 30px 20px; margin: 20px 0;">
+                                                <p style="margin: 0 0 10px 0; color: #718096; font-size: 13px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px;">
+                                                    Código de Verificación
+                                                </p>
+                                                <div style="font-family: 'Courier New', monospace; font-size: 32px; font-weight: 700; color: #1a1a2e; letter-spacing: 8px; word-break: break-all; line-height: 1.4;">
+                                                    ${resetToken}
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </table>
+                                
+                                <!-- Información importante -->
+                                <div style="background: #fff5f5; border-left: 4px solid #fc8181; padding: 20px; border-radius: 8px; margin: 30px 0;">
+                                    <p style="margin: 0; color: #742a2a; font-size: 14px; line-height: 1.7;">
+                                        <strong style="display: block; margin-bottom: 8px;">⚠️ Importante:</strong>
+                                        Este código es válido únicamente por <strong>60 minutos</strong>. 
+                                        Por seguridad, no compartas este código con nadie.
+                                    </p>
+                                </div>
+                                
+                                <p style="margin: 30px 0 0 0; color: #718096; font-size: 14px; line-height: 1.7;">
+                                    Si no has solicitado restablecer tu contraseña, puedes ignorar este mensaje de forma segura. 
+                                    Tu cuenta permanecerá protegida.
+                                </p>
+                            </td>
+                        </tr>
+                        
+                        <!-- Separador decorativo -->
+                        <tr>
+                            <td style="padding: 0 40px;">
+                                <div style="height: 1px; background: linear-gradient(90deg, transparent, #e2e8f0, transparent);"></div>
+                            </td>
+                        </tr>
+                        
+                        <!-- Footer -->
+                        <tr>
+                            <td style="padding: 30px 40px; background: #f7fafc; text-align: center;">
+                                <p style="margin: 0 0 10px 0; color: #4a5568; font-size: 14px; font-weight: 500;">
+                                    Barbería Orion
+                                </p>
+                                <p style="margin: 0 0 15px 0; color: #718096; font-size: 12px; line-height: 1.6;">
+                                    Tu estilo, nuestra pasión
+                                </p>
+                                <p style="margin: 20px 0 0 0; color: #a0aec0; font-size: 11px; line-height: 1.6;">
+                                    Este es un correo automático, por favor no respondas a este mensaje.<br>
+                                    &copy; ${new Date().getFullYear()} Barbería Orion. Todos los derechos reservados.
+                                </p>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
     </body>
     </html>
     `;
@@ -150,8 +210,8 @@ const requestPasswordReset = async (email) => {
     // Enviar el correo electrónico
     await transporter.sendMail({
         to: email,
-        from: process.env.EMAIL_USER,
-        subject: 'Restablecer contraseña',
+        from: `Barbería Orion <${process.env.EMAIL_USER}>`,
+        subject: '🔐 Restablecer Contraseña - Barbería Orion',
         html: htmlContent
     });
 
