@@ -128,29 +128,27 @@ const requestPasswordReset = async (email) => {
             logger: true // Habilitar logger
         });
 
-        // Verificar la conexión del transporter
-        console.log('🔍 Verificando conexión con el servidor de correo...');
-        try {
-            const verified = await transporter.verify();
-            if (verified) {
-                console.log('✅ Servidor de correo verificado y listo para enviar mensajes');
+        // Verificar la conexión del transporter con timeout (opcional)
+        console.log('🔍 Verificando conexión con el servidor de correo (opcional)...');
+        const verifyWithTimeout = async () => {
+            try {
+                const verifyPromise = transporter.verify();
+                const timeoutPromise = new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error('Timeout')), 5000) // 5 segundos
+                );
+                
+                await Promise.race([verifyPromise, timeoutPromise]);
+                console.log('✅ Servidor de correo verificado');
+                return true;
+            } catch (error) {
+                console.warn('⚠️ Verificación omitida (continuando de todos modos)');
+                return false;
             }
-        } catch (verifyError) {
-            console.error('❌ Error al verificar el servidor de correo:');
-            console.error('   Código:', verifyError.code);
-            console.error('   Comando:', verifyError.command);
-            console.error('   Respuesta:', verifyError.response);
-            console.error('   Mensaje completo:', verifyError.message);
-            
-            // Mensajes de error más específicos
-            if (verifyError.code === 'EAUTH') {
-                throw new Error('Error de autenticación. Verifica que EMAIL_USER y EMAIL_PASS sean correctos. Si tienes 2FA activado, necesitas usar una Contraseña de aplicación de Gmail.');
-            } else if (verifyError.code === 'ECONNECTION') {
-                throw new Error('Error de conexión con Gmail. Verifica tu conexión a internet.');
-            } else {
-                throw new Error(`Error en la configuración del servidor de correo: ${verifyError.message}`);
-            }
-        }
+        };
+        
+        // Ejecutar verificación en paralelo, no bloquear
+        const verificationResult = verifyWithTimeout();
+        // No esperamos el resultado, continuamos directamente
 
         // HTML template profesional y elegante para el correo
         const htmlContent = `
@@ -256,7 +254,7 @@ const requestPasswordReset = async (email) => {
     </html>
     `;
 
-        // Enviar el correo electrónico
+        // Enviar el correo electrónico con timeout
         console.log(`📧 Intentando enviar correo a: ${email}`);
         const mailOptions = {
             from: `Barbería Orion <${process.env.EMAIL_USER}>`,
@@ -265,8 +263,15 @@ const requestPasswordReset = async (email) => {
             html: htmlContent
         };
 
-        const info = await transporter.sendMail(mailOptions);
-        console.log('✅ Correo enviado exitosamente:', info.messageId);
+        // Crear promesa con timeout de 30 segundos para el envío
+        const sendPromise = transporter.sendMail(mailOptions);
+        const sendTimeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Timeout: El envío del correo tomó más de 30 segundos')), 30000)
+        );
+
+        const info = await Promise.race([sendPromise, sendTimeoutPromise]);
+        console.log('✅ Correo enviado exitosamente!');
+        console.log('📬 Message ID:', info.messageId);
         console.log('📬 Respuesta del servidor:', info.response);
 
         return { 
