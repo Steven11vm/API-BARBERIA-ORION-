@@ -158,10 +158,24 @@ const login = async (req, res) => {
 const requestPasswordReset = async (req, res) => {
     try {
         const { email } = req.body;
+        
+        if (!email) {
+            return res.status(400).json({ message: 'El correo electrónico es requerido' });
+        }
+
+        console.log(`🔐 Solicitud de recuperación de contraseña para: ${email}`);
         const result = await userService.requestPasswordReset(email);
+        console.log('✅ Solicitud procesada exitosamente');
         res.status(200).json(result);
     } catch (error) {
-        res.status(400).json({ message: error.message });
+        console.error('❌ Error en requestPasswordReset controller:', error);
+        const statusCode = error.message.includes('no encontrado') ? 404 : 
+                          error.message.includes('autenticación') ? 500 :
+                          error.message.includes('conexión') ? 503 : 400;
+        res.status(statusCode).json({ 
+            message: error.message,
+            error: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        });
     }
 };
 

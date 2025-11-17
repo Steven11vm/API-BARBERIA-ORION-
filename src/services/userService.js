@@ -84,27 +84,76 @@ const deleteUser = async (id) => {
 };
 
 const requestPasswordReset = async (email) => {
-    const user = await userRepository.findUserByEmail(email);
-    if (!user) {
-        throw new Error('Usuario no encontrado');
-    }
+    try {
+        // Validar variables de entorno
+        if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+            console.error('ERROR: Variables de entorno EMAIL_USER o EMAIL_PASS no están configuradas');
+            throw new Error('Configuración de correo electrónico no disponible');
+        }
 
-    const resetToken = crypto.randomBytes(20).toString('hex');
-    const resetTokenExpires = Date.now() + 3600000; // 1 hora
+        const user = await userRepository.findUserByEmail(email);
+        if (!user) {
+            throw new Error('Usuario no encontrado');
+        }
 
-    await userRepository.updateResetPasswordToken(user.id, resetToken, resetTokenExpires);
+        // Generar código de verificación de 8 dígitos numéricos
+        const resetToken = Math.floor(10000000 + Math.random() * 90000000).toString();
+        const resetTokenExpires = Date.now() + 3600000; // 1 hora
 
-    // Configuración del transporte para nodemailer
-    const transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-            user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_PASS,
-        },
-    });
+        // Guardar el código sin espacios en la base de datos
+        await userRepository.updateResetPasswordToken(user.id, resetToken, resetTokenExpires);
+        
+        // Formatear el código para mostrar en el correo (XXXX XXXX)
+        const formattedToken = resetToken.match(/.{1,4}/g).join(' ');
 
-    // HTML template profesional y elegante para el correo
-    const htmlContent = `
+        // Log de configuración (sin mostrar la contraseña completa)
+        console.log(`📧 Configurando correo con usuario: ${process.env.EMAIL_USER}`);
+        console.log(`🔑 Contraseña configurada: ${process.env.EMAIL_PASS ? '***' + process.env.EMAIL_PASS.slice(-3) : 'NO CONFIGURADA'}`);
+
+        // Configuración del transporte para nodemailer con mejor configuración para Gmail
+        const transporter = nodemailer.createTransport({
+            service: 'gmail',
+            host: 'smtp.gmail.com',
+            port: 587,
+            secure: false, // true para 465, false para otros puertos
+            auth: {
+                user: process.env.EMAIL_USER.trim(),
+                pass: process.env.EMAIL_PASS.trim(),
+            },
+            tls: {
+                rejectUnauthorized: false,
+                ciphers: 'SSLv3'
+            },
+            debug: true, // Habilitar logs de debug
+            logger: true // Habilitar logger
+        });
+
+        // Verificar la conexión del transporter
+        console.log('🔍 Verificando conexión con el servidor de correo...');
+        try {
+            const verified = await transporter.verify();
+            if (verified) {
+                console.log('✅ Servidor de correo verificado y listo para enviar mensajes');
+            }
+        } catch (verifyError) {
+            console.error('❌ Error al verificar el servidor de correo:');
+            console.error('   Código:', verifyError.code);
+            console.error('   Comando:', verifyError.command);
+            console.error('   Respuesta:', verifyError.response);
+            console.error('   Mensaje completo:', verifyError.message);
+            
+            // Mensajes de error más específicos
+            if (verifyError.code === 'EAUTH') {
+                throw new Error('Error de autenticación. Verifica que EMAIL_USER y EMAIL_PASS sean correctos. Si tienes 2FA activado, necesitas usar una Contraseña de aplicación de Gmail.');
+            } else if (verifyError.code === 'ECONNECTION') {
+                throw new Error('Error de conexión con Gmail. Verifica tu conexión a internet.');
+            } else {
+                throw new Error(`Error en la configuración del servidor de correo: ${verifyError.message}`);
+            }
+        }
+
+        // HTML template profesional y elegante para el correo
+        const htmlContent = `
     <!DOCTYPE html>
     <html lang="es">
     <head>
@@ -153,8 +202,8 @@ const requestPasswordReset = async (email) => {
                                                 <p style="margin: 0 0 10px 0; color: #718096; font-size: 13px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px;">
                                                     Código de Verificación
                                                 </p>
-                                                <div style="font-family: 'Courier New', monospace; font-size: 32px; font-weight: 700; color: #1a1a2e; letter-spacing: 8px; word-break: break-all; line-height: 1.4;">
-                                                    ${resetToken}
+                                                <div style="font-family: 'Courier New', monospace; font-size: 36px; font-weight: 700; color: #1a1a2e; letter-spacing: 4px; word-break: break-all; line-height: 1.4;">
+                                                    ${formattedToken}
                                                 </div>
                                             </div>
                                         </td>
@@ -207,19 +256,48 @@ const requestPasswordReset = async (email) => {
     </html>
     `;
 
-    // Enviar el correo electrónico
-    await transporter.sendMail({
-        to: email,
-        from: `Barbería Orion <${process.env.EMAIL_USER}>`,
-        subject: '🔐 Restablecer Contraseña - Barbería Orion',
-        html: htmlContent
-    });
+        // Enviar el correo electrónico
+        console.log(`📧 Intentando enviar correo a: ${email}`);
+        const mailOptions = {
+            from: `Barbería Orion <${process.env.EMAIL_USER}>`,
+            to: email,
+            subject: '🔐 Restablecer Contraseña - Barbería Orion',
+            html: htmlContent
+        };
 
-    return { message: 'Correo de restablecimiento enviado' };
+        const info = await transporter.sendMail(mailOptions);
+        console.log('✅ Correo enviado exitosamente:', info.messageId);
+        console.log('📬 Respuesta del servidor:', info.response);
+
+        return { 
+            message: 'Correo de restablecimiento enviado',
+            messageId: info.messageId
+        };
+    } catch (error) {
+        console.error('❌ Error al enviar correo de recuperación:', error);
+        
+        // Si es un error de autenticación de Gmail, dar un mensaje más específico
+        if (error.code === 'EAUTH' || error.responseCode === 535) {
+            throw new Error('Error de autenticación. Verifica las credenciales de correo electrónico.');
+        }
+        
+        // Si es un error de conexión
+        if (error.code === 'ECONNECTION' || error.code === 'ETIMEDOUT') {
+            throw new Error('Error de conexión con el servidor de correo. Intenta más tarde.');
+        }
+        
+        // Re-lanzar el error original si no es uno de los anteriores
+        throw error;
+    }
 };
 
 const resetPassword = async (token, newPassword) => {
-    const user = await userRepository.findUserByResetToken(token);
+    // Limpiar el token: quitar espacios y convertir a string
+    const cleanToken = token.toString().replace(/\s+/g, '');
+    
+    console.log(`🔐 Intentando restablecer contraseña con token: ${cleanToken.substring(0, 4)}****`);
+    
+    const user = await userRepository.findUserByResetToken(cleanToken);
     if (!user) {
         throw new Error('Token inválido o caducado');
     }
@@ -227,6 +305,7 @@ const resetPassword = async (token, newPassword) => {
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     await userRepository.updatePassword(user.id, hashedPassword);
 
+    console.log('✅ Contraseña restablecida exitosamente');
     return { message: 'Contraseña restablecida con éxito' };
 };
 
